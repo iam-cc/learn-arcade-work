@@ -1,10 +1,10 @@
 import arcade
-arcade.open_window(350, 500, "want to be a giraffe")
-arcade.set_background_color(arcade.color.AIR_FORCE_BLUE)
+arcade.open_window(800, 600, "want to be a giraffe")
+arcade.set_background_color(arcade.color.COOL_BLACK)
 arcade.start_render()
 
 #ground
-arcade.draw_lrtb_rectangle_filled(0, 350, 100, 0, arcade.color.BITTER_LIME)
+arcade.draw_lrtb_rectangle_filled(0, 800, 100, 0, arcade.color.BITTER_LIME)
 
 #giraffe body
 arcade.draw_lrtb_rectangle_filled(100, 280, 250, 150, arcade.color.YELLOW)
@@ -67,6 +67,74 @@ arcade.draw_lrtb_rectangle_filled(240, 270, 370, 360, arcade.color.CORAL_RED)
 arcade.draw_lrtb_rectangle_filled(220, 290, 390, 380, arcade.color.CORAL_RED)
 arcade.draw_lrtb_rectangle_filled(220, 250, 410, 400, arcade.color.CORAL_RED)
 arcade.draw_lrtb_rectangle_filled(260, 290, 410, 400, arcade.color.CORAL_RED)
+
+# grass
+arcade.draw_triangle_filled(5, 175, 10, 95, 30, 95, arcade.color.APPLE_GREEN)
+arcade.draw_triangle_filled(40, 175, 30, 95, 50, 95, arcade.color.APPLE_GREEN)
+
+arcade.draw_triangle_filled(700, 150, 690, 70, 710, 70, arcade.color.APPLE_GREEN)
+arcade.draw_triangle_filled(680, 150, 690, 70, 670, 70, arcade.color.APPLE_GREEN)
+arcade.draw_triangle_filled(660, 150, 670, 70, 650, 70, arcade.color.APPLE_GREEN)
+
+arcade.draw_triangle_filled(400, 130, 390, 50, 410, 50, arcade.color.APPLE_GREEN)
+arcade.draw_triangle_filled(380, 130, 390, 50, 370, 50, arcade.color.APPLE_GREEN)
+arcade.draw_triangle_filled(350, 130, 360, 50, 370, 50, arcade.color.APPLE_GREEN)
+
+# stars
+arcade.draw_ellipse_outline(10, 530, 10, 1, arcade.color.WHITE, tilt_angle=30)
+arcade.draw_ellipse_outline(10, 530, 10, 1, arcade.color.WHITE, tilt_angle=170)
+arcade.draw_ellipse_outline(10, 530, 10, 1, arcade.color.WHITE, tilt_angle=100)
+
+arcade.draw_ellipse_outline(50, 450, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(50, 450, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(50, 450, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+arcade.draw_ellipse_outline(100, 570, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(100, 570, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(100, 570, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+arcade.draw_ellipse_outline(200, 500, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(200, 500, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(200, 500, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+arcade.draw_ellipse_outline(280, 530, 10, 1, arcade.color.WHITE, tilt_angle=30)
+arcade.draw_ellipse_outline(280, 530, 10, 1, arcade.color.WHITE, tilt_angle=170)
+arcade.draw_ellipse_outline(280, 530, 10, 1, arcade.color.WHITE, tilt_angle=100)
+
+arcade.draw_ellipse_outline(350, 570, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(350, 570, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(350, 570, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+arcade.draw_ellipse_outline(400, 460, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(400, 460, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(400, 460, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+arcade.draw_ellipse_outline(500, 550, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(500, 550, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(500, 550, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+arcade.draw_ellipse_outline(550, 500, 10, 1, arcade.color.WHITE, tilt_angle=30)
+arcade.draw_ellipse_outline(550, 500, 10, 1, arcade.color.WHITE, tilt_angle=170)
+arcade.draw_ellipse_outline(550, 500, 10, 1, arcade.color.WHITE, tilt_angle=100)
+
+arcade.draw_ellipse_outline(730, 530, 10, 1, arcade.color.WHITE, tilt_angle=30)
+arcade.draw_ellipse_outline(730, 530, 10, 1, arcade.color.WHITE, tilt_angle=170)
+arcade.draw_ellipse_outline(730, 530, 10, 1, arcade.color.WHITE, tilt_angle=100)
+
+arcade.draw_ellipse_outline(630, 560, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(630, 560, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(630, 560, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+
+arcade.draw_ellipse_outline(700, 450, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(700, 450, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(700, 450, 30, 3, arcade.color.WHITE, tilt_angle=60)
+
+
+
+arcade.draw_ellipse_outline(780, 590, 30, 3, arcade.color.WHITE, tilt_angle=10)
+arcade.draw_ellipse_outline(780, 590, 30, 3, arcade.color.WHITE, tilt_angle=120)
+arcade.draw_ellipse_outline(780, 590, 30, 3, arcade.color.WHITE, tilt_angle=60)
 
 # finish drawing
 arcade.finish_render()
