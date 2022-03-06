@@ -93,7 +93,7 @@ def main():
     # outlines
     draw_section_outlines()
 
-    # sections
+    # draw sections
     draw_section_1()
     draw_section_2()
     draw_section_3()
