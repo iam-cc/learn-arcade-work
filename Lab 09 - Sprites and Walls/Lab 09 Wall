@@ -1,0 +1,309 @@
+import random
+import math
+import arcade
+
+SPRITE_SCALING_PLAYER = 0.5
+SPRITE_SCALING_MOVING_ENEMY = 0.3
+SPRITE_SCALING_LASER = 0.8
+SPRITE_SCALING_WALL = 0.3
+MOVING_ENEMY_COUNT = 50
+
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+SCREEN_TITLE = "CHAERIN'S GAME"
+
+BULLET_SPEED = 5
+MOVING_ENEMY_SPEED = 0.3
+
+### PARTICLE
+PARTICLE_GRAVITY = 0.05
+PARTICLE_FADE_RATE = 8
+PARTICLE_MIN_SPEED = 2.5
+PARTICLE_SPEED_RANGE = 2.5
+PARTICLE_COUNT = 20
+PARTICLE_RADIUS = 3
+PARTICLE_COLORS = [arcade.color.PINK,
+                   arcade.color.SKY_BLUE,
+                   arcade.color.YELLOW_GREEN,
+                   arcade.color.SILVER,
+                   arcade.color.KU_CRIMSON]
+PARTICLE_SPARKLE_CHANCE = 0.02
+
+### SMOKE
+SMOKE_START_SCALE = 0.25
+SMOKE_EXPANSION_RATE = 0.03
+SMOKE_FADE_RATE = 7
+SMOKE_RISE_RATE = 0.5
+SMOKE_CHANCE = 0.25
+
+class Smoke(arcade.SpriteCircle):
+    def __init__(self, size):
+        super().__init__(size, arcade.color.LIGHT_GRAY, soft=True)
+        self.change_y = SMOKE_RISE_RATE
+        self.scale = SMOKE_START_SCALE
+
+    def update(self):
+        if self.alpha <= PARTICLE_FADE_RATE:
+            self.remove_from_sprite_lists()
+        else:
+            self.alpha -= SMOKE_FADE_RATE
+            self.center_x += self.change_x
+            self.center_y += self.change_y
+            self.scale += SMOKE_EXPANSION_RATE
+
+class Particle(arcade.SpriteCircle):
+    def __init__(self, my_list):
+        color = random.choice(PARTICLE_COLORS)
+
+        super().__init__(PARTICLE_RADIUS, color)
+        self.normal_texture = self.texture
+        self.my_list = my_list
+
+        speed = random.random() * PARTICLE_SPEED_RANGE + PARTICLE_MIN_SPEED
+        direction = random.randrange(360)
+        self.change_x = math.sin(math.radians(direction)) * speed
+        self.change_y = math.cos(math.radians(direction)) * speed
+
+        self.my_alpha = 255
+        self.my_list = my_list
+
+    def update(self):
+        if self.my_alpha <= PARTICLE_FADE_RATE:
+            self.remove_from_sprite_lists()
+        else:
+            self.my_alpha -= PARTICLE_FADE_RATE
+            self.alpha = self.my_alpha
+            self.center_x += self.change_x
+            self.center_y += self.change_y
+            self.change_y -= PARTICLE_GRAVITY
+
+            if random.random() <= PARTICLE_SPARKLE_CHANCE:
+                self.alpha = 255
+                self.texture = arcade.make_circle_texture(int(self.width), arcade.color.WHITE)
+            else:
+                self.texture = self.normal_texture
+
+            if random.random() <= SMOKE_CHANCE:
+                smoke = Smoke(5)
+                smoke.position = self.position
+                self.my_list.append(smoke)
+
+class MovingEnemy(arcade.Sprite):
+    def follow_sprite(self, player_sprite):
+        if self.center_y < player_sprite.center_y:
+            self.center_y += min(MOVING_ENEMY_SPEED, player_sprite.center_y - self.center_y)
+        elif self.center_y > player_sprite.center_y:
+            self.center_y -= min(MOVING_ENEMY_SPEED, self.center_y - player_sprite.center_y)
+
+        if self.center_x < player_sprite.center_x:
+            self.center_x += min(MOVING_ENEMY_SPEED, player_sprite.center_x - self.center_x)
+        elif self.center_x > player_sprite.center_x:
+            self.center_x -= min(MOVING_ENEMY_SPEED, self.center_x - player_sprite.center_x)
+
+class MyGame(arcade.Window):
+    def __init__(self):
+        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        self.player_list = None
+        self.moving_enemy_list = None
+        self.bullet_list = None
+        self.explosions_list = None
+        self.wall_list = None
+        self.enemy_list = None
+        self.shoot_list = None
+
+        self.player_sprite = None
+        self.score = 0
+
+        self.set_mouse_visible(False)
+
+        self.gun_sound = arcade.sound.load_sound(":resources:sounds/laser2.wav")
+        self.hit_sound = arcade.sound.load_sound(":resources:sounds/explosion2.wav")
+
+        arcade.set_background_color(arcade.color.BLACK)
+
+    def setup(self):
+        self.player_list = arcade.SpriteList()
+        self.moving_enemy_list = arcade.SpriteList()
+        self.bullet_list = arcade.SpriteList()
+        self.explosions_list = arcade.SpriteList()
+        self.wall_list = arcade.SpriteList()
+        self.enemy_list = arcade.SpriteList()
+        self.shoot_list = arcade.SpriteList()
+
+        self.score = 0
+
+        self.player_sprite = arcade.Sprite(":resources:images/space_shooter/playerShip2_orange.png",
+                                           SPRITE_SCALING_PLAYER)
+        self.player_sprite.center_x = 50
+        self.player_sprite.center_y = 70
+        self.player_list.append(self.player_sprite)
+
+        # Left enemy1
+        enemy = arcade.Sprite(":resources:images/space_shooter/playerShip1_blue.png", 0.4)
+        enemy.center_x = 120
+        enemy.center_y = SCREEN_HEIGHT - enemy.height
+        enemy.angle = 180
+        self.enemy_list.append(enemy)
+
+        # Right enemy2
+        enemy = arcade.Sprite(":resources:images/space_shooter/playerShip1_blue.png", 0.4)
+        enemy.center_x = SCREEN_WIDTH - 120
+        enemy.center_y = SCREEN_HEIGHT - enemy.height
+        enemy.angle = 180
+        self.enemy_list.append(enemy)
+
+        # Create a wall
+        for x in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/tiles/bridgeB.png", SPRITE_SCALING_WALL)
+            wall.center_x = 120
+            wall.center_y = 510
+            self.wall_list.append(wall)
+
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/tiles/bridgeB.png", SPRITE_SCALING_WALL)
+            wall.center_x = 680
+            wall.center_y = 500
+            self.wall_list.append(wall)
+
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/tiles/bridgeB.png", SPRITE_SCALING_WALL)
+            wall.center_x = 400
+            wall.center_y = 400
+            self.wall_list.append(wall)
+
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/tiles/bridgeB.png", SPRITE_SCALING_WALL)
+            wall.center_x = 250
+            wall.center_y = 300
+            self.wall_list.append(wall)
+
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/tiles/bridgeB.png", SPRITE_SCALING_WALL)
+            wall.center_x = 550
+            wall.center_y = 300
+            self.wall_list.append(wall)
+
+        # Create a moving enemy
+        for i in range(MOVING_ENEMY_COUNT):
+            moving_enemy = MovingEnemy(":resources:images/space_shooter/playerShip1_green.png", SPRITE_SCALING_MOVING_ENEMY)
+            moving_enemy.center_x = random.randrange(SCREEN_WIDTH)
+            moving_enemy.center_y = random.randrange(300, SCREEN_HEIGHT)
+
+            self.moving_enemy_list.append(moving_enemy)
+
+    def on_draw(self):
+        self.clear()
+        self.moving_enemy_list.draw()
+        self.bullet_list.draw()
+        self.player_list.draw()
+        self.explosions_list.draw()
+        self.wall_list.draw()
+        self.enemy_list.draw()
+        self.shoot_list.draw()
+
+        arcade.draw_text(f"Score: {self.score}", 10, 20, arcade.color.WHITE, 14)
+
+    def on_mouse_motion(self, x, y, dx, dy):
+        self.player_sprite.center_x = x
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        arcade.sound.play_sound(self.gun_sound)
+
+        bullet = arcade.Sprite(":resources:images/space_shooter/laserBlue01.png", SPRITE_SCALING_LASER)
+        bullet.angle = 90
+        bullet.change_y = BULLET_SPEED
+        bullet.center_x = self.player_sprite.center_x
+        bullet.bottom = self.player_sprite.top
+
+        self.bullet_list.append(bullet)
+
+    def on_update(self, delta_time):
+        self.bullet_list.update()
+        self.explosions_list.update()
+        self.shoot_list.update()
+
+        for bullet in self.bullet_list:
+            bullet.center_x += bullet.change_x
+            walls_hit = arcade.check_for_collision_with_list(bullet, self.wall_list)
+            for wall in walls_hit:
+                if bullet.change_x >0:
+                    bullet.right = wall.left
+                elif bullet.change_x <0:
+                    bullet.left = wall.right
+            if len(walls_hit) >0:
+                bullet.remove_from_sprite_lists()
+
+            bullet.center_y += bullet.change_y
+            walls_hit = arcade.check_for_collision_with_list(bullet, self.wall_list)
+            for wall in walls_hit:
+                if bullet.change_y >0:
+                    bullet.top = wall.bottom
+                elif bullet.change_y <0:
+                    bullet.bottom = wall.top
+            if len(walls_hit) >0:
+                bullet.remove_from_sprite_lists()
+
+        for enemy in self.enemy_list:
+            odds = 200
+            adj_odds = int(odds * (1 / 60) / delta_time)
+            if random.randrange(adj_odds) == 0:
+                shoot = arcade.Sprite(":resources:images/space_shooter/laserRed01.png")
+                shoot.center_x = enemy.center_x
+                shoot.angle = 180
+                shoot.top = enemy.bottom
+                shoot.change_y = -2
+                self.shoot_list.append(shoot)
+        for shoot in self.shoot_list:
+            if shoot.top < 0:
+                shoot.remove_from_sprite_lists()
+
+        for moving_enemy in self.moving_enemy_list:
+            moving_enemy.follow_sprite(self.player_sprite)
+
+        for moving_enemy in self.moving_enemy_list:
+            moving_enemy.follow_sprite(self.player_sprite)
+
+        for bullet in self.bullet_list:
+            hit_list = arcade.check_for_collision_with_list(bullet, self.moving_enemy_list)
+            if len(hit_list) > 0:
+                bullet.remove_from_sprite_lists()
+
+            for moving_enemy in hit_list:
+                for i in range(PARTICLE_COUNT):
+                    particle = Particle(self.explosions_list)
+                    particle.position = moving_enemy.position
+                    self.explosions_list.append(particle)
+
+                smoke = Smoke(50)
+                smoke.position = moving_enemy.position
+                self.explosions_list.append(smoke)
+
+                moving_enemy.remove_from_sprite_lists()
+                self.score += 1
+
+                arcade.sound.play_sound(self.hit_sound)
+
+            if bullet.bottom > SCREEN_HEIGHT:
+                bullet.remove_from_sprite_lists()
+
+def main():
+    window = MyGame()
+    window.center_window()
+    window.setup()
+    arcade.run()
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
