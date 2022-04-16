@@ -1,0 +1,676 @@
+import arcade
+import random
+import math
+
+WIDTH = 800
+HEIGHT = 600
+SPRITE_SCALING = 0.5
+SPRITE_SCALING_WALL = 0.3
+SPRITE_SCALING_LASER = 0.8
+SPRITE_SCALING_BORDER = 0.3
+BULLET_SPEED = 5
+COIN_SPEED = 0.3
+GOLDCOIN_SIZE = 1.5
+
+# shoot = enemy's
+# bullet = mine
+# wall = rock-
+# border = log
+
+# FIRST SCREEN
+class MenuView(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BLACK)
+
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text("FLOG'S SELF-SUFFICIENCY", WIDTH / 2, 350,
+                         arcade.color.YELLOW_GREEN, font_size=30, anchor_x="center")
+        arcade.draw_text("WORK HARD TO SURVIVE, MY FROG FRIEND", WIDTH / 2, 275,
+                         arcade.color.RED, font_size=20, anchor_x="center")
+        arcade.draw_text("CLICK TO SEE THE INSTRUCTION", WIDTH / 2, 225,
+                         arcade.color.GRAY, font_size=10, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        instructions_view = InstructionView()
+        self.window.show_view(instructions_view)
+
+# SECOND SCREEN
+class InstructionView(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BLACK)
+
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text("HOW TO SURVIVE", WIDTH / 2, HEIGHT / 2 +100,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("GATHER: FISH AND CHIPS", WIDTH / 2, HEIGHT / 2 -50,
+                         arcade.color.YELLOW_GREEN, font_size=20, anchor_x="center")
+        arcade.draw_text("AVOID: BEE STINGS AND ROCK", WIDTH / 2, HEIGHT / 2 - 100,
+                         arcade.color.YELLOW_GREEN, font_size=20, anchor_x="center")
+        arcade.draw_text("(THIS FRIEND IS A POISON FROG)", WIDTH / 2, HEIGHT / 2 - 150,
+                         arcade.color.RED, font_size=20, anchor_x="center")
+        arcade.draw_text("USE THE MOUSE", WIDTH/2, HEIGHT/2 -200,
+                         arcade.color.GRAY, font_size= 10, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_view = GameView()
+        self.window.show_view(game_view)
+
+# THIRD SCREEN (GAME)
+class GameView(arcade.View):
+    def __init__(self):
+        super().__init__()
+
+        self.time_taken = 0
+        self.frame_count = 0
+
+        # SPRITE LISTS
+        self.player_list = arcade.SpriteList()
+        self.coin_list = arcade.SpriteList()
+        self.enemy_list = arcade.SpriteList()
+        self.wall_list = arcade.SpriteList()
+        self.shoot_list = arcade.SpriteList()
+        self.bullet_list = arcade.SpriteList()
+        self.border_list = arcade.SpriteList()
+
+        # SET UP THE PLAYER
+        self.score = 0
+        self.player_sprite = arcade.Sprite(":resources:images/enemies/frog_move.png",
+                                           SPRITE_SCALING)
+        self.player_sprite.center_x = 50
+        self.player_sprite.center_y = 50
+        self.player_list.append(self.player_sprite)
+
+        # SET THE SOUND
+        self.gun_sound = arcade.sound.load_sound(":resources:sounds/laser2.wav")
+        self.hit_sound = arcade.sound.load_sound(":resources:sounds/explosion2.wav")
+
+        # LEFT ENEMY1
+        enemy = arcade.Sprite(":resources:images/enemies/bee.png", 0.4)
+        enemy.center_x = 120
+        enemy.center_y = HEIGHT - enemy.height
+        self.enemy_list.append(enemy)
+
+        # RIGHT ENEMY2
+        enemy = arcade.Sprite(":resources:images/enemies/bee.png", 0.4)
+        enemy.center_x = WIDTH - 120
+        enemy.center_y = HEIGHT - enemy.height
+        self.enemy_list.append(enemy)
+
+        # WALL
+        for x in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big4.png", SPRITE_SCALING_WALL)
+            wall.center_x = 120
+            wall.center_y = 510
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big1.png", SPRITE_SCALING_WALL)
+            wall.center_x = 680
+            wall.center_y = 500
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big1.png", SPRITE_SCALING_WALL)
+            wall.center_x = 400
+            wall.center_y = 400
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big2.png", SPRITE_SCALING_WALL)
+            wall.center_x = 250
+            wall.center_y = 300
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big3.png", SPRITE_SCALING_WALL)
+            wall.center_x = 550
+            wall.center_y = 300
+            self.wall_list.append(wall)
+        for x in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big4.png", SPRITE_SCALING_WALL)
+            wall.center_x = 120
+            wall.center_y = 50
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big1.png", SPRITE_SCALING_WALL)
+            wall.center_x = 680
+            wall.center_y = 50
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big1.png", SPRITE_SCALING_WALL)
+            wall.center_x = 200
+            wall.center_y = 200
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big2.png", SPRITE_SCALING_WALL)
+            wall.center_x = 700
+            wall.center_y = 300
+            self.wall_list.append(wall)
+        for y in range(120, 150, 64):
+            wall = arcade.Sprite(":resources:images/space_shooter/meteorGrey_big3.png", SPRITE_SCALING_WALL)
+            wall.center_x = 550
+            wall.center_y = 30
+            self.wall_list.append(wall)
+
+        # BORDER BOTTOM
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 780
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 730
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 680
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 630
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 580
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 530
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 480
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 430
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 380
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 330
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 280
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 230
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 180
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 130
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 80
+            border.center_y = 0
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 30
+            border.center_y = 0
+            self.border_list.append(border)
+
+        # BORDER TOP
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 780
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 730
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 680
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 630
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 580
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 530
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 480
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 430
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 380
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 330
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 280
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 230
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 180
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 130
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 80
+            border.center_y = 575
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 30
+            border.center_y = 575
+            self.border_list.append(border)
+
+        # BORDER RIGHT
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 550
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 500
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 450
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 400
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 350
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 300
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 250
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 200
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 150
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 100
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 803
+            border.center_y = 50
+            border.angle = 90
+            self.border_list.append(border)
+
+        # BORDER LEFT
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 550
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 500
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 450
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 400
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 350
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 300
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 250
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 200
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 150
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 100
+            border.angle = 90
+            self.border_list.append(border)
+        for y in range(20, 300, 220):
+            border = arcade.Sprite(":resources:images/tiles/bridgeA.png", SPRITE_SCALING_BORDER)
+            border.center_x = 20
+            border.center_y = 50
+            border.angle = 90
+            self.border_list.append(border)
+
+        # COIN; MOVING FISH
+        for i in range(30):
+            # Create the coin instance
+            coin = arcade.Sprite(":resources:images/enemies/fishPink.png"
+                                 , SPRITE_SCALING / 1.5)
+            # Position the coin
+            coin.center_x = random.randrange(WIDTH)
+            coin.center_y = random.randrange(HEIGHT)
+            coin.change_x = random.randrange(-3, 4) * COIN_SPEED
+            coin.change_y = random.randrange(-3, 4) * COIN_SPEED
+
+            self.coin_list.append(coin)
+
+        # COIN; GOLD COIN
+        for i in range(20):
+            # Create the coin instance
+            coin = arcade.Sprite(":resources:images/items/gold_1.png"
+                                 , SPRITE_SCALING / GOLDCOIN_SIZE)
+
+            # Position the coin
+            coin.center_x = random.randrange(WIDTH)
+            coin.center_y = random.randrange(HEIGHT)
+
+            # Add the coin to the lists
+            self.coin_list.append(coin)
+
+    def on_show(self):
+        arcade.set_background_color(arcade.color.CELESTE)
+
+        self.window.set_mouse_visible(False)
+
+    def on_draw(self):
+        self.clear()
+        # Draw all the sprites.
+        self.player_list.draw()
+        self.coin_list.draw()
+        self.enemy_list.draw()
+        self.wall_list.draw()
+        self.shoot_list.draw()
+        self.bullet_list.draw()
+        self.border_list.draw()
+
+        # TEXT ON GAME SCREEN
+        output = f"Score: {self.score}"
+        arcade.draw_text(output, 10, 30, arcade.color.BLACK, 14)
+        output_total = f"Total Score: {self.window.total_score}"
+        arcade.draw_text(output_total, 10, 10, arcade.color.BLACK, 14)
+
+    def on_update(self, delta_time):
+        self.time_taken += delta_time
+
+        self.coin_list.update()
+        self.player_list.update()
+        self.shoot_list.update()
+        self.bullet_list.update()
+        self.wall_list.update()
+        self.border_list.update()
+        self.frame_count += 1
+
+        # COIN CHANGE DIRECTION
+        for coin in self.coin_list:
+            coin.center_x += coin.change_x
+            walls_hit = arcade.check_for_collision_with_list(coin, self.border_list)
+            for wall in walls_hit:
+                if coin.change_x > 0:
+                    coin.right = wall.left
+                elif coin.change_x < 0:
+                    coin.left = wall.right
+            if len(walls_hit) > 0:
+                coin.change_x *= -1
+
+            coin.center_y += coin.change_y
+            walls_hit = arcade.check_for_collision_with_list(coin, self.border_list)
+            for wall in walls_hit:
+                if coin.change_y > 0:
+                    coin.top = wall.bottom
+                elif coin.change_y < 0:
+                    coin.bottom = wall.top
+            if len(walls_hit) > 0:
+                coin.change_y *= -1
+
+        # COIN REMOVE W/PLAYER
+        for coin in self.coin_list:
+            hit_list = arcade.check_for_collision_with_list(coin, self.player_list)
+            if len(hit_list) >0:
+                coin.remove_from_sprite_lists()
+
+        # WALL REMOVE W/BULLET
+        for bullet in self.bullet_list:
+            hit_list = arcade.check_for_collision_with_list(bullet, self.wall_list)
+            if len(hit_list) > 0:
+                bullet.remove_from_sprite_lists()
+                for wall in hit_list:
+                    wall.remove_from_sprite_lists()
+                continue
+
+        # SHOOT MOVING ANGLE
+        for enemy in self.enemy_list:
+
+            # START POSITION
+            start_x = enemy.center_x
+            start_y = enemy.center_y
+
+            dest_x = self.player_sprite.center_x
+            dest_y = self.player_sprite.center_y
+            x_diff = dest_x - start_x
+            y_diff = dest_y - start_y
+            angle = math.atan2(y_diff, x_diff)
+
+            enemy.angle = math.degrees(angle) + 50
+            if self.frame_count % 60 == 0:
+                shoot = arcade.Sprite(":resources:images/space_shooter/laserRed01.png", 0.8)
+                shoot.center_x = start_x
+                shoot.center_y = start_y
+                shoot.angle = math.degrees(angle) + 270
+                shoot.change_x = math.cos(angle) * BULLET_SPEED
+                shoot.change_y = math.sin(angle) * BULLET_SPEED
+
+                self.shoot_list.append(shoot)
+
+        # SHOOT REMOVE
+        for shoot in self.shoot_list:
+            if shoot.top < 0:
+                shoot.remove_from_sprite_lists()
+
+        # PLAYER REMOVE W/SHOOT (GAME OVER)
+        for shoot in self.shoot_list:
+            hit_list = arcade.check_for_collision_with_list(shoot, self.player_list)
+            if len(hit_list) > 0:
+                game_over_view = GameOverView()
+                game_over_view.time_taken = self.time_taken
+                self.window.set_mouse_visible(True)
+                self.window.show_view(game_over_view)
+
+        # WALL REMOVE W/BULLET
+        for player in self.player_list:
+            hit_list = arcade.check_for_collision_with_list(player, self.wall_list)
+            if len(hit_list) > 0:
+                game_over_view = GameOverView()
+                game_over_view.time_taken = self.time_taken
+                self.window.set_mouse_visible(True)
+                self.window.show_view(game_over_view)
+
+        # WALL ABSORB SHOOT
+        for shoot in self.shoot_list:
+            shoot.center_x += shoot.change_x
+            hit_list = arcade.check_for_collision_with_list(shoot, self.wall_list)
+            for wall in hit_list:
+                if shoot.change_x >0:
+                    shoot.right = wall.left
+                elif shoot.change_x <0:
+                    shoot.left = wall.right
+            if len(hit_list) >0:
+                shoot.remove_from_sprite_lists()
+
+        # GAME OVER W/COIN
+        if len(self.coin_list) == 0:
+            game_over_view = GameOverView()
+            game_over_view.time_taken = self.time_taken
+            self.window.set_mouse_visible(True)
+            self.window.show_view(game_over_view)
+
+    def on_mouse_motion(self, x, y, _dx, _dy):
+        """
+        Called whenever the mouse moves.
+        """
+        self.player_sprite.center_x = x
+        self.player_sprite.center_y = y
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        arcade.sound.play_sound(self.gun_sound)
+        bullet = arcade.Sprite(":resources:images/space_shooter/laserBlue01.png", SPRITE_SCALING_LASER)
+        bullet.angle = 90
+        bullet.change_y = BULLET_SPEED
+        bullet.center_x = self.player_sprite.center_x
+        bullet.bottom = self.player_sprite.top
+
+        self.bullet_list.append(bullet)
+
+
+# FORTH SCREEN (GAME OVER)
+class GameOverView(arcade.View):
+    def __init__(self):
+        super().__init__()
+        self.time_taken = 0
+
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BLACK)
+
+    def on_draw(self):
+        self.clear()
+
+        # GAME OVER SCREEN
+        arcade.draw_text("GAME OVER", 200, 400, arcade.color.WHITE, 50)
+        arcade.draw_text("THERE IS NO SUCH THING AS A FREE LUNCH", 20, 350, arcade.color.YELLOW_GREEN, 25)
+        arcade.draw_text("SORRY MY FROG FRIEND!", 190, 300, arcade.color.RED,25)
+        arcade.draw_text("CLICK TO RESTART", 280, 250, arcade.color.GRAY, 20)
+
+        time_taken_formatted = f"{round(self.time_taken, 2)} seconds"
+        arcade.draw_text(f"Time taken: {time_taken_formatted}",
+                         WIDTH / 2,
+                         200,
+                         arcade.color.GRAY,
+                         font_size=15,
+                         anchor_x="center")
+
+        output_total = f"Total Score: {self.window.total_score}"
+        arcade.draw_text(output_total, 10, 10, arcade.color.WHITE, 14)
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_view = GameView()
+        self.window.show_view(game_view)
+
+
+def main():
+    window = arcade.Window(WIDTH, HEIGHT, "Chaerin's Game")
+    window.total_score = 0
+    menu_view = MenuView()
+    window.show_view(menu_view)
+    arcade.run()
+
+
+if __name__ == "__main__":
+    main()
